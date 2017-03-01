@@ -19,16 +19,6 @@ function prep_env_for_centos() {
   export PATH=${JAVA_HOME}/bin:${PATH}
 }
 
-function generate_build_number() {
-  pushd gpdb_src
-    #Only if its git repro, add commit SHA as build number
-    # BUILD_NUMBER file is used by getversion file in GPDB to append to version
-    if [ -d .git ] ; then
-      echo "commit:$(git rev-parse HEAD)" > BUILD_NUMBER
-    fi
-  popd
-}
-
 function make_sync_tools() {
   pushd gpdb_src/gpAux
     # Requires these variables in the env:
@@ -72,7 +62,6 @@ function upload_to_coverity() {
 
 function _main() {
   prep_env_for_centos
-  generate_build_number
   make_sync_tools
 
   /opt/prepare-coverity.bash

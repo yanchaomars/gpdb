@@ -49,16 +49,6 @@ function prep_env_for_sles() {
   source /opt/gcc_env.sh
 }
 
-function generate_build_number() {
-  pushd gpdb_src
-    #Only if its git repro, add commit SHA as build number
-    # BUILD_NUMBER file is used by getversion file in GPDB to append to version
-    if [ -d .git ] ; then
-      echo "commit:`git rev-parse HEAD`" > BUILD_NUMBER
-    fi
-  popd
-}
-
 function make_sync_tools() {
   pushd gpdb_src/gpAux
     # Requires these variables in the env:
@@ -134,7 +124,6 @@ function _main() {
       ;;
   esac
 
-  generate_build_number
   make_sync_tools
   # By default, only GPDB Server binary is build.
   # Use BLD_TARGETS flag with appropriate value string to generate client, loaders
