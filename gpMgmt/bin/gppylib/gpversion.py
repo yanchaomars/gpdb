@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) Greenplum Inc 2008. All Rights Reserved. 
+# Copyright (c) Greenplum Inc 2008. All Rights Reserved.
 #
 """
   gpversion.py:
@@ -13,8 +13,8 @@ import sys, os, re
 
 # Python version 2.6.2 is expected, must be between 2.5-3.0
 if sys.version_info < (2, 5, 0) or sys.version_info >= (3, 0, 0):
-    sys.stderr.write("Error: %s is supported on Python versions 2.5 or greater\n" 
-                     "Please upgrade python installed on this machine." 
+    sys.stderr.write("Error: %s is supported on Python versions 2.5 or greater\n"
+                     "Please upgrade python installed on this machine."
                      % os.path.split(__file__)[-1])
     sys.exit(1)
 
@@ -23,16 +23,16 @@ MAIN_VERSION = [5,99,99]    # version number for main
 
 
 #============================================================
-class GpVersion:
+class GpVersion(object):
     '''
-    The gpversion class is an abstraction of a given Greenplum release 
+    The gpversion class is an abstraction of a given Greenplum release
     version.  It exists in order to facilitate version comparisons,
     formating, printing, etc.
-    
+
       x = GpVersion([3,2,0,4]) => Greenplum 3.2.0.4
       x = GpVersion('3.2')     => Greenplum 3.2 dev
       x = GpVersion('3.2 build dev') => Greenplum 3.2 dev
-      x = GpVersion('main')    => Greenplum main 
+      x = GpVersion('main')    => Greenplum main
       x.major()                => Major release, eg "3.2"
       x.isrelease('3.2')       => Major version comparison
     '''
@@ -65,7 +65,6 @@ class GpVersion:
         '''
         try:
             self.version = None
-            self.build   = None
 
             # Local copy that we can safely manipulate
             v = version
@@ -73,7 +72,6 @@ class GpVersion:
             # Copy constructor
             if isinstance(v, GpVersion):
                 self.version = v.version
-                self.build   = v.build
                 return
 
             # if version isn't a type we recognise then convert to a string
@@ -84,7 +82,7 @@ class GpVersion:
                 v = str(v)
 
             # Convert a string into the version components.
-            # 
+            #
             # There are several version formats that we anticipate receiving:
             #
             # Versions from "postgres --gp-version":
@@ -99,62 +97,56 @@ class GpVersion:
             #
             if isinstance(v, str):
                 # See if it matches one of the two the long formats
-                regex = r"\(Greenplum Database\)? ([^ ]+) build ([^ )]+)"
+                regex = r"\(Greenplum Database\)? ([^ ]+) ([^ )]+)"
                 m = re.search(regex, v)
                 if m:
-                    (v, self.build) = m.groups()   # (version, build)
-                
+                    v = m.group(1)
+
                 # Remove any surplus whitespace, if present
                 v = v.strip()
 
-                # We should have either "<VERSION> <BUILD>" or "VERSION" so 
+                # We should have either "<VERSION> <BUILD>" or "VERSION" so
                 # split on whitespace.
                 vlist = v.split(' ')
-                if len(vlist) == 2:
-                    (v, self.build) = vlist
-                elif len(vlist) == 3 and vlist[1] == 'build':
-                    (v, _, self.build) = vlist
+                if len(vlist) == 2 or len(vlist) == 3 and vlist[1] == 'build':
+                    v = vlist[0]
                 elif len(vlist) > 2:
                     raise StandardError("too many tokens in version")
-                
+
                 # We should now just have "<VERSION>"
                 if v == 'main' or v.endswith('_MAIN'):
                     self.version = MAIN_VERSION
-                    if not self.build:
-                        self.build = 'dev'
                     return
-                
+
                 # Check if version contains any "special build" tokens
-                # e.g. "3.4.0.0_EAP1" or "3.4.filerep".  
+                # e.g. "3.4.0.0_EAP1" or "3.4.filerep".
                 #
                 # For special builds we use the special value for <BUILD>
                 # rather than any value calculated above.
-                
+
                 # <VERSION> consists of:
                 #    2 digits for major version
                 #    optionally another 2 digits for minor version
                 #    optionally a string specifiying a "special build", eg:
-                #        
+                #
                 #        we ignore the usual build version and use the special
                 #        vilue for "<BUILD>" instead.
-                regex = r"[0123456789.]*\d"
+                regex = r"[0-9.]*\d"
                 m = re.search(regex, v)
                 if not m:
                     raise StandardError("unable to coerce to version")
-                if m.end() < len(v):
-                    self.build = v[m.end()+1:]
-                v = v[m.start():m.end()]
-                
+                v = m.group()
+
                 # version is now just the digits, split on '.' and fall
                 # into the default handling of a list argument.
                 v = v.split('.')
 
-            # Convert a tuple to a list so that extend and slicing will work 
+            # Convert a tuple to a list so that extend and slicing will work
             # nicely
             if isinstance(v, tuple):
                 v = list(v)
 
-            # Any input we received should have been 
+            # Any input we received should have been
             if not isinstance(v, list):
                 raise StandardError("Internal coding error")
 
@@ -173,13 +165,10 @@ class GpVersion:
             else:
                 self.version = v[:3]
 
-            if not self.build:
-                self.build = 'dev'
-
 
         # If part of the conversion process above failed, throw an error,
         except:
-            raise StandardError("Unrecognised Greenplum Version '%s'" % 
+            raise StandardError("Unrecognised Greenplum Version '%s'" %
                                 str(version))
 
     #------------------------------------------------------------
@@ -188,16 +177,16 @@ class GpVersion:
         One of the main reasons for this class is so that we can safely compare
         versions with each other.  This needs to be pairwise integer comparison
         of the tuples, not a string comparison, which is why we maintain the
-        internal version as a list.       
+        internal version as a list.
         '''
         if isinstance(other, GpVersion):
             return cmp(self.version, other.version)
         else:
             return cmp(self, GpVersion(other))
-    
+
     #------------------------------------------------------------
     def __str__(self):
-        ''' 
+        '''
         The other main reason for this class is that the display version is
         not the same as the internal version for main and development releases.
         '''
@@ -214,24 +203,14 @@ class GpVersion:
             else:
                 v = '.'.join(map(str,self.version[:3]))
 
-        if self.build:
-            return "%s build %s" % (v, self.build)
-        else:
-            return v
-   
+        return v
+
     def __lshift__(self, num):
         i = self.history.index(self.getVersionRelease())
         i -= num
         if i < 0 or num < 0:
             raise StandardError('invalid version shift')
         return GpVersion(self.history[i] + ".0.0")
-
-    #------------------------------------------------------------
-    def getVersionBuild(self):
-        '''
-        Returns the build number portion of the version.
-        '''
-        return self.build
 
     #------------------------------------------------------------
     def getVersionRelease(self):
@@ -258,4 +237,4 @@ class GpVersion:
         '''
         return self.isVersionRelease(MAIN_VERSION)
 
-    
+

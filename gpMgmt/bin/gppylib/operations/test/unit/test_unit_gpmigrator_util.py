@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 #
-# Copyright (c) Pivotal Inc 2014. All Rights Reserved. 
+# Copyright (c) Pivotal Inc 2014. All Rights Reserved.
 #
 
 import os
 import unittest2 as unittest
 from gppylib.gpversion import GpVersion
 from gppylib.operations.gpMigratorUtil import is_supported_version
-from mock import patch, MagicMock, Mock 
+from mock import patch, MagicMock, Mock
 
 class IsSupportedVersionTestCase(unittest.TestCase):
     def test_is_supported_version_major_version_upgrade(self):
@@ -45,10 +45,6 @@ class IsSupportedVersionTestCase(unittest.TestCase):
 
     def test_is_supported_minor_version_downgrade(self):
         v = GpVersion('4.3.8.0')
-        self.assertTrue(is_supported_version(v, False))
-
-    def test_is_supported_dev_build_version_downgrade(self):
-        v = GpVersion('4.3 build dev')
         self.assertTrue(is_supported_version(v, False))
 
     def test_is_supported_version_hotfix_downgrade(self):
