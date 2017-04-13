@@ -15,7 +15,15 @@
 
 #include "nodes/plannodes.h"
 #include "nodes/relation.h"
-
+extern bool convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink,
+                                                                               Relids available_rels,
+                                                                               Node **new_qual, List **fromlist);
+extern bool convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
+                                                                                  bool under_not,
+                                                                                  Relids available_rels,
+                                                                                  Node **new_qual, List **fromlist);
+// 8.4-9.0-MERGE-FIX-ME The below function convert_IN_to_join and convert_testexpr
+// does not exists in commit 19e34b62395b36513a8e6c35ddfbeef12dd1e89f
 extern Node *convert_IN_to_join(PlannerInfo *root, List **rtrlist_inout, SubLink *sublink);
 extern Node *convert_testexpr(PlannerInfo *root,
 				 Node *testexpr,

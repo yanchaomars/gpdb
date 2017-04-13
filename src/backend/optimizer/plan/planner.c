@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.226.2.4 2008/04/17 21:22:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.242 2008/08/17 01:19:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -703,16 +703,28 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	AssertImply(parse->jointree->fromlist, list_length(parse->jointree->fromlist) == 1);
 
 	/* CDB: Stash current query level's relids before pulling up subqueries. */
-	root->currlevel_relids = get_relids_in_jointree((Node *) parse->jointree);
+	// 8.4-9.0-MERGE-FIX-ME get_relids_in_jointree now takes 2 args,
+	// marked 2 arg include_joins as false.
+	root->currlevel_relids = get_relids_in_jointree((Node *) parse->jointree, false);
 
-	/*
+	/* 8.4-9.0-MERGE-FIX-ME: Old comment
 	 * Look for IN clauses at the top level of WHERE, and transform them into
 	 * joins.  Note that this step only handles IN clauses originally at top
 	 * level of WHERE; if we pull up any subqueries in the next step, their
 	 * INs are processed just before pulling them up.
 	 */
+	/*
+	 * Look for ANY and EXISTS SubLinks in WHERE and JOIN/ON clauses, and try
+	 * to transform them into joins.  Note that this step does not descend
+	 * into subqueries; if we pull up any subqueries below, their SubLinks are
+	 * processed just before pulling them up.
+	 */
 	if (parse->hasSubLinks)
-		cdbsubselect_flatten_sublinks(root, (Node *) parse);
+		/*
+		 * 8.4-9.0-MERGE-FIX-ME
+		 * cdbsubselect_flatten_sublinks(root, (Node *) parse);
+		 */
+		pull_up_sublinks(root);
 
 	/*
 	 * Check to see if any subqueries in the rangetable can be merged into

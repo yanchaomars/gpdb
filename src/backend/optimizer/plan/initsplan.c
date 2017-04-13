@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.138.2.3 2009/04/16 20:42:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.142 2008/08/17 01:19:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -967,7 +967,9 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 				root->hasPseudoConstantQuals = true;
 				/* if not below outer join, push it to top of tree */
 				if (!below_outer_join)
-					relids = get_relids_in_jointree((Node *) root->parse->jointree);
+					relids =
+						get_relids_in_jointree((Node *) root->parse->jointree,
+											   false);
 			}
 		}
 	}
